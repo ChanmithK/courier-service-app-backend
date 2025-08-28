@@ -1,16 +1,14 @@
 {
   "compilerOptions": {
     "module": "nodenext",
+    "moduleResolution": "nodenext",
     "target": "esnext",
     "outDir": "dist",
     "rootDir": "src",
     "strict": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
-    "verbatimModuleSyntax": true,
-    "moduleResolution": "nodenext",
     "isolatedModules": true,
     "skipLibCheck": true
   }
 }
-
