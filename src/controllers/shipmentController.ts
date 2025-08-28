@@ -6,11 +6,13 @@ import type { AuthRequest } from "../types/index.js";
 const shipmentModel = new ShipmentModel();
 const userModel = new UserModel();
 
+// Create a new shipment
 export const createShipment = async (
   req: AuthRequest,
   res: Response
 ): Promise<void> => {
   try {
+    // Verify user exists
     const user = await userModel.findById(req.user!.id);
     if (!user) {
       res.status(404).json({ message: "User not found" });
@@ -25,12 +27,13 @@ export const createShipment = async (
       package_dimensions,
     } = req.body;
 
-    // Generate tracking number
+    // Generate unique tracking number
     const tracking_number =
       "TRK" +
       Date.now() +
       Math.random().toString(36).substr(2, 5).toUpperCase();
 
+    // Save shipment
     const shipment = await shipmentModel.create({
       tracking_number,
       user_id: req.user!.id,
@@ -54,6 +57,7 @@ export const createShipment = async (
   }
 };
 
+// Track shipment by tracking number
 export const trackShipment = async (
   req: AuthRequest,
   res: Response
@@ -67,7 +71,7 @@ export const trackShipment = async (
       return;
     }
 
-    // Check if user owns the shipment or is admin
+    // Allow only shipment owner or admin to view
     if (shipment.user_id !== req.user!.id && !req.user!.is_admin) {
       res.status(403).json({ message: "Access denied" });
       return;
@@ -80,6 +84,7 @@ export const trackShipment = async (
   }
 };
 
+// Get shipments belonging to logged-in user
 export const getUserShipments = async (
   req: AuthRequest,
   res: Response
@@ -93,6 +98,7 @@ export const getUserShipments = async (
   }
 };
 
+// Get all shipments (admin only)
 export const getAllShipments = async (
   req: AuthRequest,
   res: Response
@@ -111,12 +117,13 @@ export const getAllShipments = async (
   }
 };
 
+// Update shipment status (admin only)
 export const updateShipmentStatus = async (
   req: AuthRequest,
   res: Response
 ): Promise<void> => {
   try {
-    if (!req.user!.is_admin) {
+    if (!req.user?.is_admin) {
       res.status(403).json({ message: "Admin access required" });
       return;
     }
@@ -124,6 +131,14 @@ export const updateShipmentStatus = async (
     const { tracking_number } = req.params;
     const { status } = req.body;
 
+    // Validate status
+    const validStatuses = ["Pending", "In Transit", "Delivered", "Cancelled"];
+    if (!status || !validStatuses.includes(status)) {
+      res.status(400).json({ message: "Invalid or missing status" });
+      return;
+    }
+
+    // Update shipment
     const shipment = await shipmentModel.updateStatus(tracking_number, status);
     if (!shipment) {
       res.status(404).json({ message: "Shipment not found" });

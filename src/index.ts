@@ -9,6 +9,7 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 4000;
 
+// Enable CORS
 app.use(
   cors({
     origin: "http://localhost:3000",
@@ -18,18 +19,21 @@ app.use(
   })
 );
 
+// Parse JSON request bodies
 app.use(express.json());
 
-// Routes
+// Auth routes
 app.use("/api/auth", authRoutes);
+
+// Shipment routes
 app.use("/api/shipments", shipmentRoutes);
 
-// Health check
+// Health check endpoint
 app.get("/api/health", (req, res) => {
   res.json({ message: "Server is running!" });
 });
 
-// Error handling middleware
+// Global error handling middleware
 app.use(
   (
     err: any,
@@ -42,6 +46,7 @@ app.use(
   }
 );
 
+// Start server
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });

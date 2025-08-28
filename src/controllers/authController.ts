@@ -5,6 +5,7 @@ import { UserModel } from "../models/User.js";
 
 const userModel = new UserModel();
 
+// Register new user
 export const register = async (req: Request, res: Response): Promise<void> => {
   try {
     const {
@@ -17,7 +18,21 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       is_admin,
     } = req.body;
 
-    // Check if user exists
+    // Validate required fields
+    if (!email || !password || !contact_name || !address) {
+      res.status(400).json({ message: "Required fields are missing" });
+      return;
+    }
+
+    // Password length check
+    if (password.length < 8) {
+      res
+        .status(400)
+        .json({ message: "Password must be at least 8 characters long" });
+      return;
+    }
+
+    // Check if user already exists
     const existingUser = await userModel.findByEmail(email);
     if (existingUser) {
       res.status(400).json({ message: "User already exists" });
@@ -35,14 +50,18 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       contact_name,
       address,
       phone_number,
-      is_admin: is_admin || false,
+      is_admin: Boolean(is_admin),
     });
 
-    // Generate token
+    if (!process.env.JWT_SECRET) {
+      throw new Error("JWT_SECRET not configured");
+    }
+
+    // Generate JWT token (1 day expiry)
     const token = jwt.sign(
       { id: user.id, email: user.email, is_admin: user.is_admin },
       process.env.JWT_SECRET!,
-      { expiresIn: "7d" }
+      { expiresIn: "1d" }
     );
 
     res.status(201).json({
@@ -62,34 +81,36 @@ export const register = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
+// Login existing user
 export const login = async (req: Request, res: Response): Promise<void> => {
   try {
     const { email, password } = req.body;
 
+    // Validate input
     if (!email || !password) {
       res.status(400).json({ message: "Email and password are required" });
       return;
     }
 
-    // Find user
+    // Find user by email
     const user = await userModel.findByEmail(email);
     if (!user) {
       res.status(401).json({ message: "Invalid credentials" });
       return;
     }
 
-    // Check password
+    // Verify password
     const isValidPassword = await bcrypt.compare(password, user.password);
     if (!isValidPassword) {
       res.status(401).json({ message: "Invalid credentials" });
       return;
     }
 
-    // Generate token
+    // Generate JWT token (1 day expiry)
     const token = jwt.sign(
       { id: user.id, email: user.email, is_admin: user.is_admin },
       process.env.JWT_SECRET!,
-      { expiresIn: "7d" }
+      { expiresIn: "1d" }
     );
 
     res.json({

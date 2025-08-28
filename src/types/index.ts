@@ -1,5 +1,6 @@
 import type { Request } from "express";
 
+// User model type
 export interface User {
   id: number;
   email: string;
@@ -13,6 +14,7 @@ export interface User {
   updated_at: Date;
 }
 
+// Shipment model type
 export interface Shipment {
   id: number;
   tracking_number: string;
@@ -29,6 +31,7 @@ export interface Shipment {
   updated_at: Date;
 }
 
+// Extended request type with authenticated user info
 export interface AuthRequest extends Request {
   user?: {
     id: number;
